@@ -5390,7 +5390,9 @@ export default function App() {
       }, 220);
       return () => window.clearTimeout(t);
     }
-    window.scrollTo({ top: 0 });
+    // BEZ animacije: html ima scroll-behavior:smooth, pa bi obican scrollTo
+    // klizio (vidi se kao skrolanje dok nova stranica ulazi). "instant" to gasi.
+    window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
   }, [path, route]);
 
   // Globalni interceptor klikova na interne linkove → history navigacija (bez reloada).
