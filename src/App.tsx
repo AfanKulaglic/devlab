@@ -70,7 +70,7 @@ import PostsPage from "./PostsPage";
 import MailSignaturePage from "./MailSignaturePage";
 import BrandPage from "./BrandPage";
 import RouteCurtain from "./RouteCurtain";
-import { sacuvajStranicu } from "./lib/pageSnapshot";
+import { prikaziStaruStranicu } from "./lib/pageSnapshot";
 import { initAnalytics, trackEvent, trackPageView } from "./lib/analytics";
 import { startProjectsSync } from "./lib/projectsStore";
 import { startPricingSync } from "./lib/pricingStore";
@@ -5427,7 +5427,7 @@ export default function App() {
       if (href.startsWith("mailto:") || href.startsWith("tel:") || href.startsWith("//") || /^https?:\/\//.test(href)) return;
       if (href.startsWith("#")) {
         e.preventDefault();
-        sacuvajStranicu();
+        prikaziStaruStranicu();
         const id = href.slice(1);
         if (!id) {
           navigate("/");
@@ -5441,7 +5441,7 @@ export default function App() {
       if (href.startsWith("/")) {
         e.preventDefault();
         // Snimi STARU stranicu prije nego navigate() pokrene React render.
-        sacuvajStranicu();
+        prikaziStaruStranicu();
         navigate(href);
       }
     };

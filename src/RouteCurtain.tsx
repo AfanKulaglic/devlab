@@ -1,66 +1,50 @@
-import { useEffect, useRef, useState } from "react";
-import { uzmiStranicu } from "./lib/pageSnapshot";
+import { useLayoutEffect, useRef, useState } from "react";
+import { imaStaruStranicu, ukloniStaruStranicu } from "./lib/pageSnapshot";
 
 // Prelaz stranice — DVOSLOJNI:
-//   • stara stranica (snimljena PRIJE navigacije) TONE u mjestu
+//   • stara stranica (overlay, ubacen sinhrono u kliku) TONE u mjestu
 //   • nova stranica istovremeno SLAJDUJE zdesna preko nje
-// Snimku pravi globalni interceptor klikova (App.tsx) prije navigate(),
-// jer bi u useEffect-u DOM vec bio zamijenjen novom stranicom.
+//
+// Overlay NIJE React element — `prikaziStaruStranicu()` ga ubaci u DOM prije
+// navigate(). Zato skok skrola na vrh (koji React izazove pri renderu) ostaje
+// sakriven ispod overlaya i ne vidi se kao zasjeckanje.
 export default function RouteCurtain({ trigger }: { trigger: string }) {
   const [, setTick] = useState(0);
   const firstRef = useRef(true);
   const timersRef = useRef<number[]>([]);
   const rafRef = useRef<number[]>([]);
-  const [overlay, setOverlay] = useState<string | null>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const bezAnimacije = () =>
       typeof window !== "undefined" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    const ocisti = () => {
-      document.documentElement.classList.remove("page-leaving", "page-entering");
-      document.documentElement.style.removeProperty("--slide-offset");
+    const ocistiKlase = () => {
+      const root = document.documentElement;
+      root.classList.remove("page-leaving", "page-entering");
+      root.style.removeProperty("--slide-offset");
     };
 
     if (firstRef.current) {
       firstRef.current = false; // prvi mount pokriva Preloader
       return;
     }
-    if (bezAnimacije()) return;
+    if (bezAnimacije()) {
+      ukloniStaruStranicu();
+      return;
+    }
 
     const root = document.documentElement;
 
-    // Snimka stare stranice (uhvacena u interceptoru prije navigate()).
-    const snimka = uzmiStranicu();
-
-    // Ocisti prethodne tajmere/rafove
     timersRef.current.forEach((id) => window.clearTimeout(id));
     timersRef.current = [];
     rafRef.current.forEach((id) => cancelAnimationFrame(id));
     rafRef.current = [];
 
-    if (!snimka) {
-      // Nema snimke (npr. Back dugme) — samo slide-in nove, bez tonjenja.
-      root.style.setProperty("--slide-offset", "0px");
-      root.classList.remove("page-leaving");
-      root.classList.add("page-entering");
-      setOverlay(null);
-      const w0 = window.innerWidth;
-      const d0 = w0 < 768 ? 1050 : w0 < 1024 ? 1300 : 1600;
-      const c0 = window.setTimeout(() => {
-        root.classList.remove("page-entering");
-        root.style.removeProperty("--slide-offset");
-      }, d0 + 120);
-      timersRef.current = [c0];
-      return;
-    }
+    const w = window.innerWidth;
+    const trajanje = w < 768 ? 1050 : w < 1024 ? 1300 : 1600;
 
-    // 1) Postavi zamrznuti klon stare stranice
-    setOverlay(snimka.html);
-    root.style.setProperty("--slide-offset", `${snimka.scroll}px`);
-
-    // 2) Sljedeci frame pokreni OBE animacije zajedno
+    // Sljedeci frame pokreni OBE animacije zajedno.
     const raf1 = requestAnimationFrame(() => {
       const raf2 = requestAnimationFrame(() => {
         root.classList.add("page-entering");
@@ -70,30 +54,30 @@ export default function RouteCurtain({ trigger }: { trigger: string }) {
     });
     rafRef.current.push(raf1);
 
-    // 3) Ocisti kad animacija zavrsi (trajanje zavisi od ekrana)
-    const w = window.innerWidth;
-    const trajanje = w < 768 ? 1050 : w < 1024 ? 1300 : 1600;
     const t2 = window.setTimeout(() => {
       root.classList.remove("page-entering");
       root.style.removeProperty("--slide-offset");
-      setOverlay(null);
+      ukloniStaruStranicu();
     }, trajanje + 120);
     timersRef.current = [t2];
 
     return () => {
       rafRef.current.forEach((id) => cancelAnimationFrame(id));
       timersRef.current.forEach((id) => window.clearTimeout(id));
-      ocisti();
+      // NAMJERNO bez ukloniStaruStranicu(): overlay je ubacen sinhrono u kliku,
+      // PRIJE ovog rendera. Da ga cleanup brise, overlay bi nestao odmah nakon
+      // klika (postojao bi samo djelić kadra) i skok skrola bi se vidio.
+      ocistiKlase();
     };
   }, [trigger]);
 
-  if (!overlay) return null;
+  // Ako zbog necega overlay ostane (npr. prekid), ocisti ga na unmount.
+  useLayoutEffect(() => () => ukloniStaruStranicu(), []);
 
-  return (
-    <div
-      className="page-overlay"
-      aria-hidden="true"
-      dangerouslySetInnerHTML={{ __html: overlay }}
-    />
-  );
+  return null;
+}
+
+/** Da li je prelaz u toku (koristi App da ne dira skrol). */
+export function prelazJeAktivan(): boolean {
+  return imaStaruStranicu();
 }

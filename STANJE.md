@@ -1,6 +1,6 @@
 # Dev Lab — TRENUTNO STANJE
 > Prepisuje se na kraju svake sesije. Kratko i aktualno.
-Zadnje ažurirano: 2026-11-16 (novi prelaz stranice: stara tone, nova slajd zdesna)
+Zadnje ažurirano: 2026-11-16 (prelaz: uklonjeno zasjeckanje na skrolovanim stranicama)
 
 ## Projekt
 - React + Vite + TypeScript + Tailwind. Skoro sav kod u `src/App.tsx`, stilovi `src/index.css`.
@@ -38,7 +38,7 @@ Korisnik: "napravi mi na stranici logo da mogu skinuti logo u PNG formatu full H
 | sloj | z-index | animacija |
 |---|---|---|
 | crna podloga `html::before` | 2 | jama u koju stranica tone |
-| `.page-overlay` (stara) | 3 | `scale 1→0.4`, `rotateX 0→9°`, `brightness 1→0.25`, `blur 0→9px` |
+| `.page-overlay` (stara) | 3 | `scale 1→0.4`, `rotateX 0→9°`, `opacity 1→0` (bez filtera — vidi dolje) |
 | `.page-slide` (nova) | 4 | `translateX 100%→0` |
 
 **Dva uzroka zasto prije nije radilo (dokazana mjerenjem):**
@@ -56,6 +56,22 @@ Korisnik: "napravi mi na stranici logo da mogu skinuti logo u PNG formatu full H
 - mobilno: 280ms `L17 R17 T30 T30`, 620ms `L70 R70 T120 T120`, 950ms `L114 R114 T196 T196`
 - `MOB Projekti` stara `DevLab · Digitalna agencija` / nova `PortfolioNaši projekti`
 - `DESK O nama` stara `DevLab · Digitalna agencija` / nova `O namaTko smo mi`
+
+**Zasjeckanje na POČETKU prelaza (skrolovane stranice) — riješeno.**
+Korisnik: "nesto zasjecka kada se desava animacija da stara stranica tone, i to samo na stranicama koje sam skrolao".
+
+Uzrok: klon stare stranice se pravio u `useEffect` **poslije** React rendera, pa je prvi kadar pokazivao novu stranicu na staroj skrol poziciji, a zatim skok na vrh (izmjereno 81 ms `scrollY=5188` → 162 ms `scrollY=0`).
+
+Rješenje — **4 mjerenjem dokazana popravke**:
+
+1. **Klon se pravi sinhrono u kliku**, prije `navigate()` (`prikaziStaruStranicu()` u `pageSnapshot.ts`), overlay se ubaci u DOM odmah i skrol na vrh se desi **ispod njega**. Skok više nije vidljiv.
+2. **`cloneNode` umjesto `innerHTML`** — nema ponovnog parsiranja ~250 kB.
+3. **Klonu se NE skida klasa `.page-slide`** — na njoj visi naslijeđeni font. Kad se skine, klon dobije Manrope sa `<body>` umjesto Tailwind fonta aplikacije i sve se prelomi drugačije (sekcije ±62 px, sadržaj 34 px gore).
+4. **Nasljedni stilovi se prepisuju sa omotača na overlay** (`fontFamily`, `color`, `-webkit-font-smoothing`…), ali **NE** `fontSize`/`lineHeight`/`letterSpacing` — kopiranje computed vrijednosti zaključa `line-height` na apsolutnih 24 px, pa sitan tekst (11.2 px) dobije pogrešnu visinu linije (+7 px po redu).
+
+Izmjereno poslije: **pomak sadržaja 0 px na skrolu 0/1500/3000/6000**; piksel-diff klona vs original 2,8–7,0 (samo razlika u antialiasingu jer je klon u kompozitnom sloju). Skok skrola uvijek ispod overlay-a (`ov:DA ✓`). Najduži kadar 55–63 ms, 1–2 duga kadra, bez grešaka — desktop i mobilni.
+
+Uz to: `filter: blur/brightness` **potpuno uklonjen** sa `.page-overlay` i `page-sink` (skupo je za klon visok 12 000+ px — kadrovi od 114 ms). Preostala su samo `transform` + `opacity`, plus `contain: layout paint style`.
 
 Overlay se cisti na svim rutama + Back; nema gresaka u konzoli; reduced-motion preskace.
 

@@ -295,8 +295,12 @@ html.page-leaving::before {
 }
 
 /* STARA stranica (zamrznuti klon) — TONE u dubinu:
-   skuplja se sa SVIH STRANA prema sredini + smanjuje se + zamućuje + gasi.
-   transform-origin je centar, pa se ivice približavaju centru ravnomjerno. */
+   skuplja se sa SVIH STRANA prema sredini + smanjuje se + gasi.
+   transform-origin je centar, pa se ivice približavaju centru ravnomjerno.
+
+   BEZ filter: blur/brightness — klon je visok i po 12000px, pa je blur
+   morao da se preracuna za cijelu tu povrsinu na svakom kadru (frameovi
+   od 114ms = vidljivo zasjeckanje). Samo transform + opacity = GPU. */
 .page-overlay {
   position: fixed;
   inset: 0;
@@ -306,8 +310,9 @@ html.page-leaving::before {
   pointer-events: none;
   perspective: 1200px;
   transform-origin: 50% 50%;
-  will-change: transform, opacity, filter;
+  will-change: transform, opacity;
   backface-visibility: hidden;
+  contain: layout paint style;
   animation: page-sink 1.6s cubic-bezier(0.4, 0, 0.3, 1) both;
 }
 
@@ -317,27 +322,61 @@ html.page-leaving::before {
   transform: translateY(calc(var(--slide-offset, 0px) * -1));
 }
 
+/* Klon je dobio klasu .page-clone umjesto .page-slide (da se ne bi i on
+   animirao kao nova stranica). Zato mu moramo vratiti pozicioniranje koje
+   .page-slide nosi — inace apsolutno pozicionirani elementi traze drugog
+   roditelja i sadrzaj se pomjeri (izmjereno 34px gore). */
+.page-clone {
+  position: relative;
+  min-height: 100vh;
+  background: #060606;
+}
+
+/* Klon nosi klasu .page-slide (zbog nasljednih stilova i fonta), ali se on
+   NE smije ponasati kao nova stranica: bez slide-in animacije i bez z-indexa
+   koji bi ga izdigao iznad overlay-a. Translaciju na staru skrol poziciju
+   daje pravilo `.page-overlay > *` iznad. */
+.page-overlay .page-slide {
+  animation: none !important;
+  z-index: auto;
+  will-change: auto;
+}
+
+/* Klon je ZAMRZNUTA slika stanja — unutra ne treba nista da se animira.
+   Bez ovoga su se sve animacije sa stare stranice pokretale ponovo u klonu
+   (grain, spotlight, ad-bg...), a backdrop-filter/blur su morali da se
+   preracunaju za cijelu stranicu na svakom kadru -> zasjeckanje.
+
+   `animation: none` (a ne `paused`) — pokazalo se vjernijim: pauzirane
+   animacije su ostavljale elemente u medjustanju i razlika je bila veca. */
+.page-overlay *,
+.page-overlay *::before,
+.page-overlay *::after {
+  animation: none !important;
+  transition: none !important;
+  filter: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+
 /* TONJENJE: sve 4 ivice idu prema centru (scale sa centrom), pa propada u dubinu */
 @keyframes page-sink {
   0% {
     transform: scale(1) rotateX(0deg);
     opacity: 1;
-    filter: blur(0px) brightness(1);
   }
   35% {
     transform: scale(0.86) rotateX(3deg);
     opacity: 0.95;
-    filter: blur(1px) brightness(0.9);
   }
   70% {
     transform: scale(0.62) rotateX(6deg);
     opacity: 0.55;
-    filter: blur(4px) brightness(0.6);
   }
   100% {
     transform: scale(0.4) rotateX(9deg);
     opacity: 0;
-    filter: blur(9px) brightness(0.25);
   }
 }
 
