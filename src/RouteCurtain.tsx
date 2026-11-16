@@ -57,12 +57,16 @@ export default function RouteCurtain({ trigger }: { trigger: string }) {
     });
 
     // ── 3) Ocisti sve kad animacija zavrsi ──────────────────────
+    // Trajanje zavisi od ekrana (vidi @media u index.css):
+    //   mobilno (<768) 1050ms · tablet (<1024) 1300ms · desktop 1600ms
+    const w = window.innerWidth;
+    const trajanje = w < 768 ? 1050 : w < 1024 ? 1300 : 1600;
     const t2 = window.setTimeout(() => {
       root.classList.remove("page-entering");
       setOverlay(null);
       root.style.removeProperty("--slide-offset");
       window.scrollTo({ top: stariScroll, behavior: "instant" as ScrollBehavior });
-    }, 1700);
+    }, trajanje + 120);
 
     timersRef.current = [t2];
 

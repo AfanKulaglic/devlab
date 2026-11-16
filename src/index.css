@@ -360,6 +360,27 @@ html.page-entering .page-slide {
     animation: none;
   }
 }
+
+/* MOBILNO: ista animacija, ali kraca — na malom ekranu 1,6s djeluje predugo.
+   Skraceno na 1,05s, a nova klizi isto toliko da ostanu sinhronizovane. */
+@media (max-width: 767px) {
+  .page-overlay {
+    animation-duration: 1.05s;
+  }
+  html.page-entering .page-slide {
+    animation-duration: 1.05s;
+  }
+}
+
+/* Tablet: izmedju */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .page-overlay {
+    animation-duration: 1.3s;
+  }
+  html.page-entering .page-slide {
+    animation-duration: 1.3s;
+  }
+}
 .route-curtain {
   position: fixed;
   inset: 0;
