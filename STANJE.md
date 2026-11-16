@@ -33,18 +33,18 @@ Korisnik: "napravi mi na stranici logo da mogu skinuti logo u PNG formatu full H
 
 ### 2. Prelaz stranice — dvoslojni (1,05 s)
 
- (**novi fajl**) + CSS u .
+`src/RouteCurtain.tsx` (**novi fajl**) + CSS u `src/index.css`.
 
-Na navigaciju se **klonira stara stranica** u  (HTML clone, bez biblioteka) i pokrenu se **obje animacije u istom frame-u**:
+Na navigaciju se **klonira stara stranica** u `.page-overlay` (HTML clone, bez biblioteka) i pokrenu se **obje animacije u istom frame-u**:
 
 | sloj | z-index | animacija |
 |---|---|---|
-|  (stara) | 3 | tone: , ,  |
-|  (nova) | 4 | klizi:  |
+| `.page-overlay` (stara) | 3 | tone: `scale 1→0.86`, `translateY 4%`, `blur 0→7px` |
+| `.page-slide` (nova) | 4 | klizi: `translateX 100%→0` |
 
 - Nova je **iznad** stare → vidi se kako klizi preko nje dok stara tone
--  čuva scroll poziciju klona
-- Provjereno mjerenjem oba sloja: 250ms , 450ms , 950ms 
+- `--slide-offset` čuva scroll poziciju klona
+- Provjereno mjerenjem oba sloja: 250ms `op=0.96/x=399`, 450ms `op=0.88/x=101`, 950ms `op=0.09/x=0`
 - Overlay se čisti bez ostatka; Back dugme radi; reduced-motion preskače
 
 ### 3. Nova ikona svuda
