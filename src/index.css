@@ -277,45 +277,69 @@ button {
   backface-visibility: hidden;
 }
 
-/* STARA stranica (zamrznuti klon) — tone u mjestu, ISPOD nove */
+/* Tamna podloga IZA stare stranice — da se vidi ivica kako se skuplja.
+   Postoji samo dok traje prelaz. */
+html.page-entering::before,
+html.page-leaving::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  background: #000; /* crna jama u koju stranica tone */
+  pointer-events: none;
+}
+
+/* STARA stranica (zamrznuti klon) — TONE u dubinu:
+   skuplja se sa SVIH STRANA prema sredini + smanjuje se + zamućuje + gasi.
+   transform-origin je centar, pa se ivice približavaju centru ravnomjerno. */
 .page-overlay {
   position: fixed;
   inset: 0;
   z-index: 3;
   overflow: hidden;
-  background: #060606;
+  background: transparent; /* NE prekrivaj — ispod je tamna podloga, pa se ivica vidi */
   pointer-events: none;
+  perspective: 1200px;
+  transform-origin: 50% 50%;
   will-change: transform, opacity, filter;
   backface-visibility: hidden;
-  animation: page-sink 1.05s cubic-bezier(0.32, 0.02, 0.45, 1) both;
+  animation: page-sink 1.6s cubic-bezier(0.4, 0, 0.3, 1) both;
 }
 
 /* Klon stare stranice mora poceti na istoj scroll poziciji na kojoj je korisnik bio.
-   RouteCurtain postavlja --slide-y na <html>. */
+   RouteCurtain postavlja --slide-offset na <html>. */
 .page-overlay > * {
   transform: translateY(calc(var(--slide-offset, 0px) * -1));
 }
 
+/* TONJENJE: sve 4 ivice idu prema centru (scale sa centrom), pa propada u dubinu */
 @keyframes page-sink {
   0% {
-    transform: scale(1) translateY(0);
+    transform: scale(1) rotateX(0deg);
     opacity: 1;
-    filter: blur(0px);
+    filter: blur(0px) brightness(1);
   }
-  55% {
-    opacity: 0.85;
-    filter: blur(1.5px);
+  35% {
+    transform: scale(0.86) rotateX(3deg);
+    opacity: 0.95;
+    filter: blur(1px) brightness(0.9);
+  }
+  70% {
+    transform: scale(0.62) rotateX(6deg);
+    opacity: 0.55;
+    filter: blur(4px) brightness(0.6);
   }
   100% {
-    transform: scale(0.86) translateY(4%);
+    transform: scale(0.4) rotateX(9deg);
     opacity: 0;
-    filter: blur(7px);
+    filter: blur(9px) brightness(0.25);
   }
 }
 
-/* NOVA stranica — slajduje zdesna, u ISTO vrijeme dok stara tone */
+/* NOVA stranica — slajduje zdesna, u ISTO vrijeme dok stara tone.
+   Sporije (1.6s) i sa blažim easingom da se klizanje stigne ispratiti. */
 html.page-entering .page-slide {
-  animation: page-slide-in 1.05s cubic-bezier(0.22, 1, 0.3, 1) both;
+  animation: page-slide-in 1.6s cubic-bezier(0.33, 0, 0.15, 1) both;
 }
 
 @keyframes page-slide-in {

@@ -62,7 +62,7 @@ export default function RouteCurtain({ trigger }: { trigger: string }) {
       setOverlay(null);
       root.style.removeProperty("--slide-offset");
       window.scrollTo({ top: stariScroll, behavior: "instant" as ScrollBehavior });
-    }, 1150);
+    }, 1700);
 
     timersRef.current = [t2];
 
