@@ -1254,38 +1254,57 @@ function Preloader() {
 
 // Zavjesa pri promjeni stranice (redirect): SAMO ploče (bez logotipa/progress bara) —
 // instant prekriju ekran pa se brzo otvore. Prvo učitavanje koristi puni <Preloader/>.
+// Prelaz stranice: STARA stranica tone (scale dole + fade), NOVA dolazi ZDESNA
+// slajdom. Radi preko klase na omotacu (#page-slide), bez unmountovanja React stabla.
 function RouteCurtain({ trigger }: { trigger: string }) {
-  const [phase, setPhase] = useState<"idle" | "cover" | "open">("idle");
+  const [, setTick] = useState(0);
   const firstRef = useRef(true);
+  const timersRef = useRef<number[]>([]);
 
   useEffect(() => {
+    const bezAnimacije = () =>
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    const reset = () => {
+      document.documentElement.classList.remove("page-leaving", "page-entering");
+    };
+
     if (firstRef.current) {
-      firstRef.current = false; // prvi mount: Preloader to pokriva, preskoči
+      firstRef.current = false; // prvi mount pokriva Preloader
       return;
     }
-    if (typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      return; // bez animacije za reduced-motion
-    }
-    setPhase("cover"); // instant prekrij (ploče na translateX(0))
-    let raf2 = 0;
-    const raf1 = requestAnimationFrame(() => {
-      raf2 = requestAnimationFrame(() => setPhase("open")); // sljedeći frame: otvori zavjesu
-    });
-    const done = window.setTimeout(() => setPhase("idle"), 650); // po završetku otvaranja ukloni
+    if (bezAnimacije()) return;
+
+    const root = document.documentElement;
+    timersRef.current.forEach((id) => window.clearTimeout(id));
+    timersRef.current = [];
+
+    // 1) stara stranica tone
+    root.classList.remove("page-entering");
+    root.classList.add("page-leaving");
+
+    // 2) poslije 260 ms nova ulijece zdesna (React je u medjuvremenu zamijenio sadrzaj)
+    const t1 = window.setTimeout(() => {
+      root.classList.remove("page-leaving");
+      root.classList.add("page-entering");
+      setTick((n) => n + 1);
+    }, 260);
+
+    // 3) ocisti klase kad animacija zavrsi
+    const t2 = window.setTimeout(() => {
+      root.classList.remove("page-entering");
+    }, 760);
+
+    timersRef.current = [t1, t2];
+
     return () => {
-      cancelAnimationFrame(raf1);
-      cancelAnimationFrame(raf2);
-      window.clearTimeout(done);
+      timersRef.current.forEach((id) => window.clearTimeout(id));
+      reset();
     };
   }, [trigger]);
 
-  if (phase === "idle") return null;
-  return (
-    <div className={`route-curtain ${phase === "open" ? "route-curtain-open" : ""}`} aria-hidden="true">
-      <span className="preloader-panel preloader-panel-left" />
-      <span className="preloader-panel preloader-panel-right" />
-    </div>
-  );
+  return null;
 }
 
 function SectionHeading({ title, subtitle, align = "left", icon: Icon, eyebrow, tone = "dark" }: { title: string; subtitle?: string; align?: "left" | "center"; icon?: IconType; eyebrow?: string; tone?: "dark" | "light" }) {
@@ -5604,6 +5623,9 @@ export default function App() {
         Preskoči na sadržaj
       </a>
       <Header />
+      {/* page-slide: omotac na koji RouteCurtain stavlja .page-leaving / .page-entering.
+          Klase idu na <html>, pa omotac mora imati data-atribut za CSS. */}
+      <div className="page-slide">
       {route === "about" ? (
         <AboutPage />
       ) : route === "services" ? (
@@ -5635,6 +5657,7 @@ export default function App() {
       ) : (
         <HomePage />
       )}
+      </div>
       <ContactAndFooter />
       <FloatingActions raised={cookieVisible} />
       <CookieConsent visible={cookieVisible} onAccept={acceptCookies} />

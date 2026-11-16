@@ -261,8 +261,59 @@ button {
   transition: opacity 0.4s ease, transform 0.55s ease, filter 0.4s ease;
 }
 
-/* Zavjesa pri promjeni stranice (redirect) — reuse .preloader-panel, ali brže i bez
-   logotipa/progress bara. Ploče instant prekriju, pa kliznu van (otvaranje zavjese). */
+/* ── Prelaz stranice: STARA tone, NOVA dolazi ZDESNA (slajd) ──
+   Klase .page-leaving / .page-entering postavlja RouteCurtain na <html>.
+   Animira se samo omotac .page-slide — header/footer ostaju mirni. */
+.page-slide {
+  will-change: transform, opacity, filter;
+  transform-origin: 50% 40%;
+  backface-visibility: hidden;
+}
+
+/* Stara stranica: toni nadolje (scale + fade + blur), kao da prolazi kroz ekran */
+html.page-leaving .page-slide {
+  animation: page-sink 0.26s cubic-bezier(0.4, 0, 0.9, 0.5) both;
+  pointer-events: none;
+}
+
+@keyframes page-sink {
+  from {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+    filter: blur(0);
+  }
+  to {
+    transform: translateX(12%) scale(0.92);
+    opacity: 0;
+    filter: blur(3px);
+  }
+}
+
+/* Nova stranica: ulijece zdesna i smiruje se na mjestu */
+html.page-entering .page-slide {
+  animation: page-slide-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes page-slide-in {
+  from {
+    transform: translateX(100%) scale(1);
+    opacity: 0.35;
+  }
+  to {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+}
+
+/* Reduced motion: bez prelaza, samo trenutna zamjena */
+@media (prefers-reduced-motion: reduce) {
+  html.page-leaving .page-slide,
+  html.page-entering .page-slide {
+    animation: none;
+  }
+}
+
+/* Stari dvoplocni prelaz vise se ne koristi (zadrzano radi drugih klasa) */
 .route-curtain {
   position: fixed;
   inset: 0;
