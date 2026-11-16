@@ -1,6 +1,6 @@
 # Dev Lab — TRENUTNO STANJE
 > Prepisuje se na kraju svake sesije. Kratko i aktualno.
-Zadnje ažurirano: 2026-11-16 (nova 512x512 ikona svuda, stara obrisana)
+Zadnje ažurirano: 2026-11-16 (novi prelaz stranice: stara tone, nova slajd zdesna)
 
 ## Projekt
 - React + Vite + TypeScript + Tailwind. Skoro sav kod u `src/App.tsx`, stilovi `src/index.css`.
@@ -31,11 +31,18 @@ Korisnik: "napravi mi na stranici logo da mogu skinuti logo u PNG formatu full H
 - Pregled svijetlih varijanti ide na bijeloj podlozi (inače se crni "Dev" ne vidi).
 - Stranica je `noindex` automatski (soft-404 guard: nije u `known` listi).
 
-### 2. Nova ikona svuda
+### 2. Prelaz stranice (animacija)
+ u `src/App.tsx` + CSS u `src/index.css`:
+- Stara stranica **tone**: `translateX(12%) scale(0.92) blur(3px)`, 260 ms
+- Nova dolazi **zdesna**: `translateX(100%) → 0`, 500 ms
+- Klase `page-leaving`/`page-entering` idu na `<html>`, animira se omotac `.page-slide`
+- Header i footer mirni; reduced-motion preskace animaciju
+
+### 3. Nova ikona svuda
 Stara 64x64 ikona (`logo-icon.png`) **obrisana**. Nova (`logo-icon-hd.png`, 512x512) zamijenjena na 8 mjesta:
 `src/App.tsx` (navbar, footer, /logo), `src/lib/postLogo.ts` (base64 za objave), `src/MailSignaturePage.tsx`, `index.html` (favicon + JSON-LD), `api/send-mail.ts`.
 
-### 3. p06 — "Pet usluga" → "Četiri usluge"
+### 4. p06 — "Pet usluga" → "Četiri usluge"
 Lista ima 4 stavke (stranice, igrice, aplikacije, AI), a podnaslov je govorio "Pet". Popravljeno u `src/lib/posts1.ts`.
 
 ## Blokirano / otvoreno
