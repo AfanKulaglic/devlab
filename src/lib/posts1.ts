@@ -222,7 +222,7 @@ export const POSTS_1: AdPost[] = [
         eyebrow: "Naše usluge",
         title: "Stranice, shopovi, aplikacije, igrice i AI.",
         // Podnaslov nosi POSLJEDICU za klijenta, ne ponavlja listu ispod.
-        subtitle: "Pet usluga. Sve od istog tima. Sve po javnoj cijeni.",
+        subtitle: "Četiri usluge. Sve od istog tima. Sve po javnoj cijeni.",
         accentWords: [],
         lead: "Radimo stranice, igrice, aplikacije i AI asistente. Bez podugovaranja i bez posrednika — isti tim radi sve, pa se dijelovi poklapaju bez duplih troškova.",
         items: [
