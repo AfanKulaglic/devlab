@@ -1280,21 +1280,21 @@ function RouteCurtain({ trigger }: { trigger: string }) {
     timersRef.current.forEach((id) => window.clearTimeout(id));
     timersRef.current = [];
 
-    // 1) stara stranica tone
+    // 1) stara stranica tone u mjestu
     root.classList.remove("page-entering");
     root.classList.add("page-leaving");
 
-    // 2) poslije 260 ms nova ulijece zdesna (React je u medjuvremenu zamijenio sadrzaj)
+    // 2) nova ulijece zdesna dok stara jos tone (blago preklapanje = nema praznog kadra)
     const t1 = window.setTimeout(() => {
       root.classList.remove("page-leaving");
       root.classList.add("page-entering");
       setTick((n) => n + 1);
-    }, 260);
+    }, 180);
 
-    // 3) ocisti klase kad animacija zavrsi
+    // 3) ocisti klase kad animacija zavrsi (180 + 620 = 800 ms)
     const t2 = window.setTimeout(() => {
       root.classList.remove("page-entering");
-    }, 760);
+    }, 820);
 
     timersRef.current = [t1, t2];
 
