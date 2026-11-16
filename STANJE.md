@@ -83,15 +83,32 @@ Overlay se cisti na svim rutama + Back; nema gresaka u konzoli; reduced-motion p
 - Gde animacija **treba**, u JS-u je eksplicitno `behavior: "smooth"`: dugme `Nazad na vrh`, `#anchori`, skrol na sekciju.
 - Modul flag `dosaoIzHistorije` — na `popstate` se skrol **ne** vraca na vrh, browser vrati zapamtu poziciju u jednom skoku.
 
+**Back/Forward — skrol vracamo SAMI, prije crtanja (fix 2026-11-16).**
+Korisnik: "kada skrolam do odredjenog dijela sajta i predjem na drugi i vratim se, prvo se prikaze vrh pa odjednom trepne i skrola".
+
+- `history.scrollRestoration = "manual"` — browserovo vracanje je KASNO (poslije React rendera) → vidi se vrh pa skok.
+- Skrol se pamti **po history zapisu**: indeks zapisa u `history.state.idx`, pozicije u `sessionStorage` (`dvf-skrol-mapa`). Tako i **Forward** vraca tačnu poziciju (prije je vraćao 0).
+- Vraćanje ide u **`useLayoutEffect`** (prije paint-a), ne `useEffect`.
+- **Jedan** `popstate` slušalac na nivou modula — hook `useAppRoute()` se koristi na dva mjesta, pa se događaj obrađivao dvaput i drugi prolaz je pregazio upravo upisanu poziciju (sve je vraćalo istu vrijednost).
+
+Izmjereno (desktop i mobilni):
+
+```
+skrol 3000 -> /o-nama (skrol 1200) -> /kontakt (skrol 600)
+BACK #1 -> /o-nama   y=1200  ✓   (0 kadrova na vrhu)
+BACK #2 -> /         y=3000  ✓   (0 kadrova na vrhu)
+FWD  #1 -> /o-nama   y=1200  ✓
+FWD  #2 -> /kontakt  y=600   ✓
+novi link -> /usluge y=0     ✓
+mob: 4000 -> link -> BACK vraca 4000 u prvom kadru  ✓
+```
+
 Izmjereno (mobilno i desktop isto):
 
 ```
 link->/o-nama    prije=1200  2 promjene  kraj=0     instant
 link->/projekti  prije=900   2 promjene  kraj=0     instant
 link->/kontakt   prije=1600  2 promjene  kraj=0     instant
-BACK #1                      2 promjene  kraj=1600  instant
-BACK #2                      2 promjene  kraj=900   instant
-BACK #3                      2 promjene  kraj=1200  instant
 ```
 
 Dugme `Nazad na vrh` ostalo animirano (80 koraka / 1576 ms).

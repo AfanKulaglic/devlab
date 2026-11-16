@@ -1,4 +1,4 @@
-import { createContext, FormEvent, PointerEvent as ReactPointerEvent, ReactNode, TouchEvent as ReactTouchEvent, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { createContext, FormEvent, PointerEvent as ReactPointerEvent, ReactNode, TouchEvent as ReactTouchEvent, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { IconType } from "react-icons";
 import {
   HiOutlineRocketLaunch,
@@ -4346,13 +4346,67 @@ function ServiceDetailPage({ detail }: { detail: ServiceDetail }) {
 
 // Path-based (history) router — čisti URL-ovi (npr. /usluge) koji rade i na direktan unos
 // uz Vercel SPA rewrite (vercel.json). navigate() radi pushState + javlja svim slušaocima.
-// true kad je navigacija dosla iz Back/Forward dugmeta.
-// Tada NE smijemo vracati skrol na vrh — browser sam vraca zapamtu poziciju.
-let dosaoIzHistorije = false;
+// Zapamcena skrol pozicija za history zapis na koji se vracamo (Back/Forward).
+let skrolIzHistorije: number | null = null;
+
+/**
+ * Upamti gdje je korisnik na TRENUTNOM history zapisu.
+ * Zove se PRIJE nego prelaz skroluje na vrh, inače bismo upamtili 0.
+ */
+const SKROL_MAPA_KEY = "dvf-skrol-mapa";
+let indeksStranice = 0;
+let mapaSkrola: Record<string, number> = {};
+
+function ucitajMapuSkrola() {
+  try {
+    const raw = sessionStorage.getItem(SKROL_MAPA_KEY);
+    mapaSkrola = raw ? (JSON.parse(raw) as Record<string, number>) : {};
+  } catch {
+    mapaSkrola = {};
+  }
+}
+
+function sacuvajMapuSkrola() {
+  try {
+    sessionStorage.setItem(SKROL_MAPA_KEY, JSON.stringify(mapaSkrola));
+  } catch {
+    /* sessionStorage nedostupan */
+  }
+}
+
+export function sacuvajSkrol() {
+  if (typeof window === "undefined") return;
+  mapaSkrola[String(indeksStranice)] = Math.round(window.scrollY);
+  sacuvajMapuSkrola();
+}
+
+// Browserovo vlastito vracanje skrola na popstate desava se KASNO (poslije
+// React rendera) i vidi se kao "vrh pa treptaj pa skok". Zato ga gasimo i
+// vracamo poziciju sami u useLayoutEffect-u, prije crtanja kadra.
+if (typeof window !== "undefined") {
+  if ("scrollRestoration" in window.history) window.history.scrollRestoration = "manual";
+
+  ucitajMapuSkrola();
+  const pocetni = window.history.state as { idx?: number } | null;
+  indeksStranice = pocetni && typeof pocetni.idx === "number" ? pocetni.idx : 0;
+
+  // JEDAN slusalac za cijelu aplikaciju (hook se koristi na dva mjesta).
+  window.addEventListener("popstate", () => {
+    // 1) upamti gdje smo bili na zapisu koji napustamo,
+    mapaSkrola[String(indeksStranice)] = Math.round(window.scrollY);
+    sacuvajMapuSkrola();
+    // 2) predji na indeks zapisa na koji idemo,
+    const st = window.history.state as { idx?: number } | null;
+    indeksStranice = st && typeof st.idx === "number" ? st.idx : 0;
+    // 3) uzmi njegovu zapamtu poziciju (0 ako ga prvi put vidimo).
+    skrolIzHistorije = mapaSkrola[String(indeksStranice)] ?? 0;
+  });
+}
 
 function navigate(to: string, scrollToId?: string) {
   if (typeof window === "undefined") return;
-  dosaoIzHistorije = false;
+  // NAPOMENA: skrol se NE pamti ovdje — overlay ga je vec skrolovao na vrh.
+  // Pamti se u interceptoru klikova, prije `prikaziStaruStranicu()`.
   if (scrollToId) {
     try {
       sessionStorage.setItem("dvf-scroll-id", scrollToId);
@@ -4360,19 +4414,24 @@ function navigate(to: string, scrollToId?: string) {
       /* sessionStorage nedostupan */
     }
   }
-  if (to !== window.location.pathname) window.history.pushState({}, "", to);
+  if (to !== window.location.pathname) {
+    indeksStranice += 1;
+    window.history.pushState({ idx: indeksStranice }, "", to);
+  }
   window.dispatchEvent(new Event("dvf:locationchange"));
 }
 
+// Browserovo vlastito vracanje skrola na popstate desava se KASNO (poslije
+// React rendera) i vidi se kao "vrh pa treptaj pa skok". Zato ga gasimo i
+// vracamo poziciju sami u useLayoutEffect-u, prije crtanja kadra.
 function useAppRoute() {
   const [path, setPath] = useState(() => (typeof window !== "undefined" ? window.location.pathname : "/"));
   useEffect(() => {
     const onChange = () => setPath(window.location.pathname);
-    // Back/Forward: zapamti da ne smijemo resetovati skrol na vrh.
-    const onPop = () => {
-      dosaoIzHistorije = true;
-      setPath(window.location.pathname);
-    };
+    // Skrol logiku radi JEDAN modul-nivo slusalac (ispod), ne hook — hook se
+    // koristi na dva mjesta, pa bi se popstate obradio dvaput i drugi prolaz
+    // bi pregazio upravo upisanu poziciju.
+    const onPop = () => setPath(window.location.pathname);
     window.addEventListener("popstate", onPop);
     window.addEventListener("dvf:locationchange", onChange);
     return () => {
@@ -5385,7 +5444,9 @@ export default function App() {
     setCookieVisible(false);
   };
 
-  useEffect(() => {
+  // useLayoutEffect (NE useEffect): skrol mora biti postavljen PRIJE nego
+  // browser nacrta kadar, inace se na Back vidi vrh pa skok.
+  useLayoutEffect(() => {
     // Tražena in-page meta (npr. #pricing) postavljena preko navigate(to, id) ili anchor-klika.
     let scrollId = "";
     try {
@@ -5400,15 +5461,29 @@ export default function App() {
       }, 220);
       return () => window.clearTimeout(t);
     }
-    // Back/Forward: NE diraj skrol — browser vrati zapamtu poziciju (bez animacije,
-    // jer html vise nema scroll-behavior:smooth).
-    if (dosaoIzHistorije) {
-      dosaoIzHistorije = false;
-      return;
-    }
-    // Nova stranica ide na vrh u jednom skoku (bez animacije).
+  // Nova stranica ide na vrh u jednom skoku (bez animacije).
+  //
+  // Back/Forward: skrol vracamo SAMI, sinhrono i PRIJE crtanja sljedeceg kadra.
+  // Ako to prepustimo browseru, on svoju obnovu odradi kasnije (posto React
+  // vec nacrta novu stranicu) — korisnik prvo vidi vrh, pa "trepne" i skrol
+  // skoci na zapamtu poziciju. Zato je scrollRestoration "manual".
+  const trebaObnoviti = skrolIzHistorije;
+  skrolIzHistorije = null;
+
+  if (trebaObnoviti === null) {
     window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
-  }, [path, route]);
+  } else {
+    const y = trebaObnoviti;
+    window.scrollTo({ top: y, behavior: "instant" as ScrollBehavior });
+    // Slike/fontovi jos mogu promijeniti visinu — ispravi u sljedecem kadru
+    // i jednom poslije ucitavanja, bez animacije.
+    requestAnimationFrame(() => {
+      if (Math.abs(window.scrollY - y) > 2) {
+        window.scrollTo({ top: y, behavior: "instant" as ScrollBehavior });
+      }
+    });
+  }
+}, [path, route]);
 
   // Globalni interceptor klikova na interne linkove → history navigacija (bez reloada).
   // Interni "/..." linkovi idu kroz navigate(); "#..." anchori skrolaju (s home-a) ili vode home + skrol.
@@ -5427,6 +5502,10 @@ export default function App() {
       if (href.startsWith("mailto:") || href.startsWith("tel:") || href.startsWith("//") || /^https?:\/\//.test(href)) return;
       if (href.startsWith("#")) {
         e.preventDefault();
+        // Pamti skrol samo ako cemo stvarno NAPUSTITI stranicu (navigate).
+        // `#id` na istoj stranici je samo skrolovanje — pozicija se ne mijenja.
+        const ide = href.slice(1) ? window.location.pathname !== "/" : true;
+        if (ide) sacuvajSkrol();
         prikaziStaruStranicu();
         const id = href.slice(1);
         if (!id) {
@@ -5440,6 +5519,9 @@ export default function App() {
       }
       if (href.startsWith("/")) {
         e.preventDefault();
+        // Upamti skrol TRENUTNE stranice u njen history zapis (prije nego
+        // overlay skroluje na vrh), da bi Back vratio tacno ovu poziciju.
+        sacuvajSkrol();
         // Snimi STARU stranicu prije nego navigate() pokrene React render.
         prikaziStaruStranicu();
         navigate(href);
