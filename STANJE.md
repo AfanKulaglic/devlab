@@ -31,7 +31,7 @@ Korisnik: "napravi mi na stranici logo da mogu skinuti logo u PNG formatu full H
 - Pregled svijetlih varijanti ide na bijeloj podlozi (inače se crni "Dev" ne vidi).
 - Stranica je `noindex` automatski (soft-404 guard: nije u `known` listi).
 
-### 2. Prelaz stranice — dvoslojni (1,05 s)
+### 2. Prelaz stranice — dvoslojni, stara se skuplja u centar (1,6 s)
 
 `src/RouteCurtain.tsx` (**novi fajl**) + CSS u `src/index.css`.
 
@@ -39,13 +39,15 @@ Na navigaciju se **klonira stara stranica** u `.page-overlay` (HTML clone, bez b
 
 | sloj | z-index | animacija |
 |---|---|---|
-| `.page-overlay` (stara) | 3 | tone: `scale 1→0.86`, `translateY 4%`, `blur 0→7px` |
+| crna podloga `html::before` | 2 | jama u koju stranica tone |
+| `.page-overlay` (stara) | 3 | `scale 1→0.4`, `rotateX 0→9°`, `brightness 1→0.25`, `blur 0→9px` |
 | `.page-slide` (nova) | 4 | klizi: `translateX 100%→0` |
 
+- `transform-origin: 50% 50%` → sve 4 ivice idu ravnomjerno ka centru
 - Nova je **iznad** stare → vidi se kako klizi preko nje dok stara tone
 - `--slide-offset` čuva scroll poziciju klona
-- Provjereno mjerenjem oba sloja: 250ms `op=0.96/x=399`, 450ms `op=0.88/x=101`, 950ms `op=0.09/x=0`
-- Overlay se čisti bez ostatka; Back dugme radi; reduced-motion preskače
+- Izmjereno (margine simetrične → skuplja se u centar): t=200 `L12 R13 T8 B9 w975`, t=800 `L125 R125 T86 B85 w750`, t=1400 `L276 R276 T189 B189 w448`
+- Overlay se čisti na svih 5 ruta + Back; nema grešaka u konzoli
 
 ### 3. Nova ikona svuda
 Stara 64x64 ikona (`logo-icon.png`) **obrisana**. Nova (`logo-icon-hd.png`, 512x512) zamijenjena na 8 mjesta:
