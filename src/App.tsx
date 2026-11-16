@@ -68,6 +68,7 @@ import { FaLinkedinIn, FaInstagram } from "react-icons/fa6";
 import AdminPanel from "./AdminPanel";
 import PostsPage from "./PostsPage";
 import MailSignaturePage from "./MailSignaturePage";
+import BrandPage from "./BrandPage";
 import { initAnalytics, trackEvent, trackPageView } from "./lib/analytics";
 import { startProjectsSync } from "./lib/projectsStore";
 import { startPricingSync } from "./lib/pricingStore";
@@ -5378,6 +5379,7 @@ export default function App() {
     "/objave": "objave",
     "/admin": "admin",
     "/logo": "logo",
+    "/brend": "brend",
     "/mail": "mail",
   };
   // "/" → home; poznata putanja → njena vrijednost; sve ostalo → 404.
@@ -5582,6 +5584,9 @@ export default function App() {
 
   // Logo: samo logotip preko cijele stranice (bez headera/footera).
   if (route === "logo") return <LogoPage />;
+
+  // Brend: preuzimanje logotipa (PNG Full HD / 4K + SVG).
+  if (route === "brend") return <BrandPage />;
   if (route === "mail") return <MailSignaturePage />;
 
   return (
