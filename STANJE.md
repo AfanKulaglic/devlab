@@ -59,7 +59,7 @@ Korisnik: "napravi mi na stranici logo da mogu skinuti logo u PNG formatu full H
 
 Overlay se cisti na svim rutama + Back; nema gresaka u konzoli; reduced-motion preskace.
 
-**Skrolovanje na novoj stranici je iskljuceno.**  ima , pa je  pri promjeni rute animirao klizanje do vrha. Sad je  — izmjereno  u jednom skoku (2 promjene), desktop i mobilno.
+**Skrolovanje na novoj stranici je iskljuceno.** `html` ima `scroll-behavior: smooth`, pa je `window.scrollTo({top: 0})` pri promjeni rute animirao klizanje do vrha. Sad je `behavior: "instant"` — izmjereno `1200 → 0` u jednom skoku (2 promjene), desktop i mobilno.
 
 ### 3. Nova ikona svuda
 Stara 64x64 ikona (`logo-icon.png`) **obrisana**. Nova (`logo-icon-hd.png`, 512x512) zamijenjena na 8 mjesta:
