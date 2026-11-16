@@ -69,6 +69,7 @@ import AdminPanel from "./AdminPanel";
 import PostsPage from "./PostsPage";
 import MailSignaturePage from "./MailSignaturePage";
 import BrandPage from "./BrandPage";
+import RouteCurtain from "./RouteCurtain";
 import { initAnalytics, trackEvent, trackPageView } from "./lib/analytics";
 import { startProjectsSync } from "./lib/projectsStore";
 import { startPricingSync } from "./lib/pricingStore";
@@ -1250,61 +1251,6 @@ function Preloader() {
       </div>
     </div>
   );
-}
-
-// Zavjesa pri promjeni stranice (redirect): SAMO ploče (bez logotipa/progress bara) —
-// instant prekriju ekran pa se brzo otvore. Prvo učitavanje koristi puni <Preloader/>.
-// Prelaz stranice: STARA stranica tone (scale dole + fade), NOVA dolazi ZDESNA
-// slajdom. Radi preko klase na omotacu (#page-slide), bez unmountovanja React stabla.
-function RouteCurtain({ trigger }: { trigger: string }) {
-  const [, setTick] = useState(0);
-  const firstRef = useRef(true);
-  const timersRef = useRef<number[]>([]);
-
-  useEffect(() => {
-    const bezAnimacije = () =>
-      typeof window !== "undefined" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-    const reset = () => {
-      document.documentElement.classList.remove("page-leaving", "page-entering");
-    };
-
-    if (firstRef.current) {
-      firstRef.current = false; // prvi mount pokriva Preloader
-      return;
-    }
-    if (bezAnimacije()) return;
-
-    const root = document.documentElement;
-    timersRef.current.forEach((id) => window.clearTimeout(id));
-    timersRef.current = [];
-
-    // 1) stara stranica tone u mjestu
-    root.classList.remove("page-entering");
-    root.classList.add("page-leaving");
-
-    // 2) nova ulijece zdesna dok stara jos tone (blago preklapanje = nema praznog kadra)
-    const t1 = window.setTimeout(() => {
-      root.classList.remove("page-leaving");
-      root.classList.add("page-entering");
-      setTick((n) => n + 1);
-    }, 180);
-
-    // 3) ocisti klase kad animacija zavrsi (180 + 620 = 800 ms)
-    const t2 = window.setTimeout(() => {
-      root.classList.remove("page-entering");
-    }, 820);
-
-    timersRef.current = [t1, t2];
-
-    return () => {
-      timersRef.current.forEach((id) => window.clearTimeout(id));
-      reset();
-    };
-  }, [trigger]);
-
-  return null;
 }
 
 function SectionHeading({ title, subtitle, align = "left", icon: Icon, eyebrow, tone = "dark" }: { title: string; subtitle?: string; align?: "left" | "center"; icon?: IconType; eyebrow?: string; tone?: "dark" | "light" }) {

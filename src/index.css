@@ -261,24 +261,39 @@ button {
   transition: opacity 0.4s ease, transform 0.55s ease, filter 0.4s ease;
 }
 
-/* ── Prelaz stranice: STARA tone, NOVA dolazi ZDESNA (slajd) ──
-   Klase .page-leaving / .page-entering postavlja RouteCurtain na <html>.
-   Animira se samo omotac .page-slide — header/footer ostaju mirni. */
+/* ── Prelaz stranice: DVOSLOJNI ────────────────────────────────────
+   RouteCurtain u trenutku navigacije klonira STARU stranicu u .page-overlay
+   (fixed preko ekrana) i pokrene ISTOVREMENO:
+     • .page-overlay  → tone  (scale + fade + blur), traje 1.05s
+     • .page-slide    → klizi zdesna, traje 1.05s
+   Tako covjek VIDI oba poteza u istom trenutku. */
+
 .page-slide {
   position: relative;
-  z-index: 1;
+  z-index: 4; /* IZNAD overlay-a — nova klizi PREKO stare */
   min-height: 100vh;
-  background: #060606; /* da nikad ne proviri bijela pozadina ispod */
-  will-change: transform, opacity, filter;
-  transform-origin: 50% 50%;
+  background: #060606;
+  will-change: transform;
   backface-visibility: hidden;
 }
 
-/* STARA stranica TONE u mjestu: smanji se + propadne nadolje + izblijedi.
-   Nema horizontalnog pomjeranja — tone, ne bjezi u stranu. */
-html.page-leaving .page-slide {
-  animation: page-sink 0.34s cubic-bezier(0.4, 0, 0.75, 0.5) both;
+/* STARA stranica (zamrznuti klon) — tone u mjestu, ISPOD nove */
+.page-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 3;
+  overflow: hidden;
+  background: #060606;
   pointer-events: none;
+  will-change: transform, opacity, filter;
+  backface-visibility: hidden;
+  animation: page-sink 1.05s cubic-bezier(0.32, 0.02, 0.45, 1) both;
+}
+
+/* Klon stare stranice mora poceti na istoj scroll poziciji na kojoj je korisnik bio.
+   RouteCurtain postavlja --slide-y na <html>. */
+.page-overlay > * {
+  transform: translateY(calc(var(--slide-offset, 0px) * -1));
 }
 
 @keyframes page-sink {
@@ -287,39 +302,40 @@ html.page-leaving .page-slide {
     opacity: 1;
     filter: blur(0px);
   }
+  55% {
+    opacity: 0.85;
+    filter: blur(1.5px);
+  }
   100% {
-    transform: scale(0.9) translateY(3%);
+    transform: scale(0.86) translateY(4%);
     opacity: 0;
-    filter: blur(4px);
+    filter: blur(7px);
   }
 }
 
-/* NOVA stranica SLAJDUJE zdesna. Traje duze (620ms) da se klizanje VIDI,
-   a opacity ostaje visok cijelo vrijeme — ne treperi na ulasku. */
+/* NOVA stranica — slajduje zdesna, u ISTO vrijeme dok stara tone */
 html.page-entering .page-slide {
-  animation: page-slide-in 0.62s cubic-bezier(0.32, 0.72, 0.24, 1) both;
+  animation: page-slide-in 1.05s cubic-bezier(0.22, 1, 0.3, 1) both;
 }
 
 @keyframes page-slide-in {
   0% {
     transform: translate3d(100%, 0, 0);
-    opacity: 1;
   }
   100% {
     transform: translate3d(0, 0, 0);
-    opacity: 1;
   }
 }
 
-/* Reduced motion: bez prelaza, samo trenutna zamjena */
+/* Reduced motion: bez prelaza */
 @media (prefers-reduced-motion: reduce) {
-  html.page-leaving .page-slide,
+  .page-overlay {
+    display: none;
+  }
   html.page-entering .page-slide {
     animation: none;
   }
 }
-
-/* Stari dvoplocni prelaz vise se ne koristi (zadrzano radi drugih klasa) */
 .route-curtain {
   position: fixed;
   inset: 0;
