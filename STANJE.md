@@ -31,12 +31,21 @@ Korisnik: "napravi mi na stranici logo da mogu skinuti logo u PNG formatu full H
 - Pregled svijetlih varijanti ide na bijeloj podlozi (inače se crni "Dev" ne vidi).
 - Stranica je `noindex` automatski (soft-404 guard: nije u `known` listi).
 
-### 2. Prelaz stranice (animacija)
-`RouteCurtain` u `src/App.tsx` + CSS u `src/index.css`:
-- Stara stranica **tone**: `translateX(12%) scale(0.92) blur(3px)`, 260 ms
-- Nova dolazi **zdesna**: `translateX(100%) → 0`, 500 ms
-- Klase `page-leaving`/`page-entering` idu na `<html>`, animira se omotac `.page-slide`
-- Header i footer mirni; reduced-motion preskace animaciju
+### 2. Prelaz stranice — dvoslojni (1,05 s)
+
+ (**novi fajl**) + CSS u .
+
+Na navigaciju se **klonira stara stranica** u  (HTML clone, bez biblioteka) i pokrenu se **obje animacije u istom frame-u**:
+
+| sloj | z-index | animacija |
+|---|---|---|
+|  (stara) | 3 | tone: , ,  |
+|  (nova) | 4 | klizi:  |
+
+- Nova je **iznad** stare → vidi se kako klizi preko nje dok stara tone
+-  čuva scroll poziciju klona
+- Provjereno mjerenjem oba sloja: 250ms , 450ms , 950ms 
+- Overlay se čisti bez ostatka; Back dugme radi; reduced-motion preskače
 
 ### 3. Nova ikona svuda
 Stara 64x64 ikona (`logo-icon.png`) **obrisana**. Nova (`logo-icon-hd.png`, 512x512) zamijenjena na 8 mjesta:
