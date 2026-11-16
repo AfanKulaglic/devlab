@@ -1,6 +1,6 @@
 # Dev Lab — TRENUTNO STANJE
 > Prepisuje se na kraju svake sesije. Kratko i aktualno.
-Zadnje ažurirano: 2026-11-16 (stranica /brend za preuzimanje logotipa)
+Zadnje ažurirano: 2026-11-16 (brend stranica koristi pravu 512x512 ikonu)
 
 ## Projekt
 - React + Vite + TypeScript + Tailwind. Skoro sav kod u `src/App.tsx`, stilovi `src/index.css`.
@@ -19,14 +19,14 @@ Korisnik: "napravi mi na stranici logo da mogu skinuti logo u PNG formatu full H
 
 | fajl | šta radi |
 |---|---|
-| `src/lib/logoVector.ts` | NOVO — vektorska rekonstrukcija tikvice (izvor je bio samo 64×64 PNG) |
+| `src/lib/logoVector.ts` | putanja + ugradjena base64 kopija ikone (fallback) |
 | `src/BrandPage.tsx` | NOVO — stranica sa 6 varijanti + download |
 | `src/App.tsx` | ruta `/brend` → `BrandPage` |
 
 - **6 varijanti**: puni logo (tamna / svijetla), samo ikona sa okvirom, samo tikvica, samo tekst (tamna / svijetla).
 - **3 formata po kartici**: HD 1920 px, 4K 3840 px (tačna širina), SVG vektor.
 - Sve se crta na **`<canvas>`** — SVG-kao-slika ne učitava web fontove, pa bi tekst pao na sistemski font. Canvas koristi Manrope iz stranice.
-- Tikvica je **vektorska** → nema pikselizacije na 4K (stari PNG je bio 64×64).
+- Ikona je **korisnikov original 512×512 PNG** (`public/images/logo-icon-hd.png`), prozirna pozadina. Ne crta se vektorski — koristi se tacno ta slika.
 - Prozirna pozadina potvrđena (uglovi `0,0,0,0`), margine 136 px na 3840 px.
 - Pregled svijetlih varijanti ide na bijeloj podlozi (inače se crni "Dev" ne vidi).
 - Stranica je `noindex` automatski (soft-404 guard: nije u `known` listi).
