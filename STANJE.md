@@ -59,7 +59,24 @@ Korisnik: "napravi mi na stranici logo da mogu skinuti logo u PNG formatu full H
 
 Overlay se cisti na svim rutama + Back; nema gresaka u konzoli; reduced-motion preskace.
 
-**Skrolovanje na novoj stranici je iskljuceno.** `html` ima `scroll-behavior: smooth`, pa je `window.scrollTo({top: 0})` pri promjeni rute animirao klizanje do vrha. Sad je `behavior: "instant"` — izmjereno `1200 → 0` u jednom skoku (2 promjene), desktop i mobilno.
+**Skrolovanje nema animaciju — nigdje.**
+
+- Uklonjen globalni `scroll-behavior: smooth` sa `html` (animirao je i vracanje skrola pri Back/Forward: 0 → 1500 u 37 koraka / 770 ms).
+- Gde animacija **treba**, u JS-u je eksplicitno `behavior: "smooth"`: dugme `Nazad na vrh`, `#anchori`, skrol na sekciju.
+- Modul flag `dosaoIzHistorije` — na `popstate` se skrol **ne** vraca na vrh, browser vrati zapamtu poziciju u jednom skoku.
+
+Izmjereno (mobilno i desktop isto):
+
+```
+link->/o-nama    prije=1200  2 promjene  kraj=0     instant
+link->/projekti  prije=900   2 promjene  kraj=0     instant
+link->/kontakt   prije=1600  2 promjene  kraj=0     instant
+BACK #1                      2 promjene  kraj=1600  instant
+BACK #2                      2 promjene  kraj=900   instant
+BACK #3                      2 promjene  kraj=1200  instant
+```
+
+Dugme `Nazad na vrh` ostalo animirano (80 koraka / 1576 ms).
 
 ### 3. Nova ikona svuda
 Stara 64x64 ikona (`logo-icon.png`) **obrisana**. Nova (`logo-icon-hd.png`, 512x512) zamijenjena na 8 mjesta:
