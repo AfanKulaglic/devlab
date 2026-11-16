@@ -4346,8 +4346,13 @@ function ServiceDetailPage({ detail }: { detail: ServiceDetail }) {
 
 // Path-based (history) router — čisti URL-ovi (npr. /usluge) koji rade i na direktan unos
 // uz Vercel SPA rewrite (vercel.json). navigate() radi pushState + javlja svim slušaocima.
+// true kad je navigacija dosla iz Back/Forward dugmeta.
+// Tada NE smijemo vracati skrol na vrh — browser sam vraca zapamtu poziciju.
+let dosaoIzHistorije = false;
+
 function navigate(to: string, scrollToId?: string) {
   if (typeof window === "undefined") return;
+  dosaoIzHistorije = false;
   if (scrollToId) {
     try {
       sessionStorage.setItem("dvf-scroll-id", scrollToId);
@@ -4363,10 +4368,15 @@ function useAppRoute() {
   const [path, setPath] = useState(() => (typeof window !== "undefined" ? window.location.pathname : "/"));
   useEffect(() => {
     const onChange = () => setPath(window.location.pathname);
-    window.addEventListener("popstate", onChange);
+    // Back/Forward: zapamti da ne smijemo resetovati skrol na vrh.
+    const onPop = () => {
+      dosaoIzHistorije = true;
+      setPath(window.location.pathname);
+    };
+    window.addEventListener("popstate", onPop);
     window.addEventListener("dvf:locationchange", onChange);
     return () => {
-      window.removeEventListener("popstate", onChange);
+      window.removeEventListener("popstate", onPop);
       window.removeEventListener("dvf:locationchange", onChange);
     };
   }, []);
@@ -5390,8 +5400,13 @@ export default function App() {
       }, 220);
       return () => window.clearTimeout(t);
     }
-    // BEZ animacije: html ima scroll-behavior:smooth, pa bi obican scrollTo
-    // klizio (vidi se kao skrolanje dok nova stranica ulazi). "instant" to gasi.
+    // Back/Forward: NE diraj skrol — browser vrati zapamtu poziciju (bez animacije,
+    // jer html vise nema scroll-behavior:smooth).
+    if (dosaoIzHistorije) {
+      dosaoIzHistorije = false;
+      return;
+    }
+    // Nova stranica ide na vrh u jednom skoku (bez animacije).
     window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
   }, [path, route]);
 

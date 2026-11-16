@@ -11,7 +11,12 @@
 }
 
 html {
-  scroll-behavior: smooth;
+  /* NAMJERNO BEZ `scroll-behavior: smooth`.
+     Globalni smooth je animirao i vracanje skrola pri Back/Forward navigaciji
+     (0 -> 1500 u 37 koraka), a i reset na vrh pri promjeni rute.
+     Svugdje gdje treba animirano skrolanje, u JS-u je eksplicitno
+     behavior: "smooth" (back-to-top, #anchori, scroll na sekciju). */
+  scroll-behavior: auto;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   /* Spriječi horizontalni scroll na nivou viewporta (mora i na html, ne samo body) */
