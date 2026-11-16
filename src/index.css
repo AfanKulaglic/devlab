@@ -275,7 +275,7 @@ button {
 
 .page-slide {
   position: relative;
-  z-index: 4; /* IZNAD overlay-a — nova klizi PREKO stare */
+  z-index: 4; /* ISPOD overlay-a — nova klizi ISPOD stare koja se smanjuje */
   min-height: 100vh;
   background: #060606;
   will-change: transform;
@@ -304,7 +304,9 @@ html.page-leaving::before {
 .page-overlay {
   position: fixed;
   inset: 0;
-  z-index: 3;
+  z-index: 5; /* IZNAD nove stranice (4) — stara se smanjuje U CENTAR i vidi se
+                  kako ispod nje nova klizi zdesna. Da je stara ispod, nova bi je
+                  prekrila i tonjenje se nikad ne bi vidjelo. */
   overflow: hidden;
   background: transparent; /* NE prekrivaj — ispod je tamna podloga, pa se ivica vidi */
   pointer-events: none;
