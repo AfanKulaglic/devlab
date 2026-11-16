@@ -3,10 +3,9 @@
 // učitava web fontove). Ikona je vektorska (logoVector.ts) — nema pikselizacije.
 
 import { useEffect, useRef, useState } from "react";
-import { flaskSvg } from "./lib/logoVector";
+import { LOGO_ICON_SRC, LOGO_ICON_DATA_URI } from "./lib/logoVector";
 
 /* ─────────── boje (identične navbaru) ─────────── */
-const TEAL = "#4DEAE0";
 const GRAD_FROM = "#5EEAD4"; // teal-300
 const GRAD_TO = "#67E8F9"; // cyan-300
 const BOX_DARK_BG = "#0B0B0F";
@@ -40,15 +39,19 @@ const VARIANTS: Variant[] = [
   { id: "wordmark-light", kind: "wordmark", onLight: true, title: "Samo tekst — svijetla pozadina", note: "DevLab u crnoj + tirkizni gradijent." },
 ];
 
-/* ─────────── učitavanje vektorske tikvice ─────────── */
+/* ─────────── učitavanje PRAVE tikvice (512×512 PNG, prozirna pozadina) ─────────── */
 let flaskPromise: Promise<HTMLImageElement> | null = null;
 function loadFlask(): Promise<HTMLImageElement> {
   if (!flaskPromise) {
     flaskPromise = new Promise((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => resolve(img);
-      img.onerror = () => reject(new Error("flask"));
-      img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(flaskSvg(512));
+      const load = (src: string, onFail?: () => void) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => (onFail ? onFail() : reject(new Error("icon")));
+        img.src = src;
+      };
+      // prvo pravi fajl; ako ne uspije, ugrađena kopija
+      load(LOGO_ICON_SRC, () => load(LOGO_ICON_DATA_URI));
     });
   }
   return flaskPromise;
@@ -198,16 +201,7 @@ function logoSvg(variant: Variant): string {
   const H = (showBox || variant.kind === "flask" ? box : font * 1.2) + pad * 2;
   const lid = variant.kind === "flask" ? "flask" : showIcon0 ? "icon" : "word";
 
-  const flaskPaths = `
-    <g stroke="${TEAL}" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M27.5 17.5 V34" /><path d="M36.5 17.5 V34" />
-      <path d="M27.5 32 L14.5 55.5 Q13.2 58.5 16.6 58.5 H47.4 Q50.8 58.5 49.5 55.5 L36.5 32" />
-    </g>
-    <rect x="24.5" y="13.6" width="15" height="4.4" rx="1.6" fill="${TEAL}" />
-    <path d="M19.6 49.5 H44.4 L48.2 55.2 Q49.4 58 46.2 58 H17.8 Q14.6 58 15.8 55.2 Z" fill="${TEAL}" />
-    <circle cx="27.5" cy="45.2" r="2.5" fill="${TEAL}" />
-    <circle cx="36" cy="45.2" r="1.7" fill="${TEAL}" />
-    <path d="M34 4.2 Q35.9 7.6 35.9 9.2 A1.95 1.95 0 0 1 32.1 9.2 Q32.1 7.6 34 4.2 Z" fill="${TEAL}" />`;
+  const flaskPaths = `<image x="0" y="0" width="64" height="64" href="${LOGO_ICON_DATA_URI}" preserveAspectRatio="xMidYMid meet"/>`;
 
   const iconPart = showBox
     ? `<g>
