@@ -38,10 +38,10 @@ Korisnik: "napravi mi na stranici logo da mogu skinuti logo u PNG formatu full H
 | sloj | z-index | animacija |
 |---|---|---|
 | crna podloga `html::before` | 2 | jama u koju stranica tone |
-| `.page-slide` (nova) | 4 | `translateX 100%→0` |
-| `.page-overlay` (stara) | **5** | `scale 1→0.4`, `rotateX 0→9°`, `opacity 1→0` |
+| `.page-overlay` (stara) | 3 | `scale 1→0.4`, `rotateX 0→9°`, `opacity 1→0` |
+| `.page-slide` (nova) | **4** | `translateX 100%→0` |
 
-**Stara je IZNAD nove.** Ako je stara ispod, nova je prekrije i tonjenje se ne vidi — korisnik je tražio da se **u isto vrijeme** vidi stara kako se smanjuje prema centru i nova kako dolazi zdesna.
+**Nova je IZNAD stare** — klizi preko nje zdesna. Stara se ispod smanjuje prema centru i vidi se lijevo dok je nova ne pokrije. (Korisnik je eksplicitno tražio da stara NE bude iznad nove.)
 
 **Dva uzroka zasto prije nije radilo (dokazana mjerenjem):**
 
