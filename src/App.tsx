@@ -867,7 +867,7 @@ function Logo() {
       {/* Logo ikona (brend znak) — umjesto starog terminalnog >_ */}
       <span className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border border-white/15 bg-[#0B0B0F] transition duration-300 group-hover:border-teal-400/60">
         <img
-          src="/images/logo-icon.png"
+          src="/images/logo-icon-hd.png"
           alt=""
           width={40}
           height={40}
@@ -4738,7 +4738,7 @@ function AdMark({ size = 40 }: { size?: number | string }) {
       style={{ height: size, width: size }}
     >
       <img
-        src="/images/logo-icon.png"
+        src="/images/logo-icon-hd.png"
         alt=""
         className="object-contain"
         style={{ height: LOGO_ICON_SCALE, width: LOGO_ICON_SCALE }}
@@ -5341,7 +5341,7 @@ function LogoPage() {
           style={{ width: "22vmin", height: "22vmin" }}
         >
           <img
-            src="/images/logo-icon.png"
+            src="/images/logo-icon-hd.png"
             alt="DevLab logo"
             className="object-contain transition duration-500 group-hover:scale-105"
             style={{ width: LOGO_ICON_SCALE, height: LOGO_ICON_SCALE }}

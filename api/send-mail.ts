@@ -99,7 +99,7 @@ ${paragraphs}
       <table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;font-family:Arial,Helvetica,sans-serif;">
   <tr>
     <td style="padding:0 22px 0 0;vertical-align:top;border-right:3px solid ${TEAL_BRIGHT};">
-      <img src="https://devlab.cc.cd/images/logo-icon.png" width="64" height="64" alt="Dev Lab"
+      <img src="https://devlab.cc.cd/images/logo-icon-hd.png" width="64" height="64" alt="DevLab"
         style="display:block;width:64px;height:64px;border:0;outline:none;" />
       <div style="font-size:11px;font-weight:bold;color:${INK};text-align:center;padding-top:6px;letter-spacing:-0.2px;">
         Dev<span style="color:${TEAL_BRIGHT};">Lab</span>
