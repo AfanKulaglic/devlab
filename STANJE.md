@@ -1,6 +1,6 @@
 # Dev Lab — TRENUTNO STANJE
 > Prepisuje se na kraju svake sesije. Kratko i aktualno.
-Zadnje ažurirano: 2026-11-16 (brend stranica koristi pravu 512x512 ikonu)
+Zadnje ažurirano: 2026-11-16 (nova 512x512 ikona svuda, stara obrisana)
 
 ## Projekt
 - React + Vite + TypeScript + Tailwind. Skoro sav kod u `src/App.tsx`, stilovi `src/index.css`.
@@ -31,7 +31,11 @@ Korisnik: "napravi mi na stranici logo da mogu skinuti logo u PNG formatu full H
 - Pregled svijetlih varijanti ide na bijeloj podlozi (inače se crni "Dev" ne vidi).
 - Stranica je `noindex` automatski (soft-404 guard: nije u `known` listi).
 
-### 2. p06 — "Pet usluga" → "Četiri usluge"
+### 2. Nova ikona svuda
+Stara 64x64 ikona (`logo-icon.png`) **obrisana**. Nova (`logo-icon-hd.png`, 512x512) zamijenjena na 8 mjesta:
+`src/App.tsx` (navbar, footer, /logo), `src/lib/postLogo.ts` (base64 za objave), `src/MailSignaturePage.tsx`, `index.html` (favicon + JSON-LD), `api/send-mail.ts`.
+
+### 3. p06 — "Pet usluga" → "Četiri usluge"
 Lista ima 4 stavke (stranice, igrice, aplikacije, AI), a podnaslov je govorio "Pet". Popravljeno u `src/lib/posts1.ts`.
 
 ## Blokirano / otvoreno
