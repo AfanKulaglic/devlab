@@ -59,6 +59,8 @@ Korisnik: "napravi mi na stranici logo da mogu skinuti logo u PNG formatu full H
 
 Overlay se cisti na svim rutama + Back; nema gresaka u konzoli; reduced-motion preskace.
 
+**Skrolovanje na novoj stranici je iskljuceno.**  ima , pa je  pri promjeni rute animirao klizanje do vrha. Sad je  — izmjereno  u jednom skoku (2 promjene), desktop i mobilno.
+
 ### 3. Nova ikona svuda
 Stara 64x64 ikona (`logo-icon.png`) **obrisana**. Nova (`logo-icon-hd.png`, 512x512) zamijenjena na 8 mjesta:
 `src/App.tsx` (navbar, footer, /logo), `src/lib/postLogo.ts` (base64 za objave), `src/MailSignaturePage.tsx`, `index.html` (favicon + JSON-LD), `api/send-mail.ts`.
