@@ -32,7 +32,7 @@ Korisnik: "napravi mi na stranici logo da mogu skinuti logo u PNG formatu full H
 - Stranica je `noindex` automatski (soft-404 guard: nije u `known` listi).
 
 ### 2. Prelaz stranice (animacija)
- u `src/App.tsx` + CSS u `src/index.css`:
+`RouteCurtain` u `src/App.tsx` + CSS u `src/index.css`:
 - Stara stranica **tone**: `translateX(12%) scale(0.92) blur(3px)`, 260 ms
 - Nova dolazi **zdesna**: `translateX(100%) → 0`, 500 ms
 - Klase `page-leaving`/`page-entering` idu na `<html>`, animira se omotac `.page-slide`
