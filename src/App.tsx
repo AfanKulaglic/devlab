@@ -70,6 +70,7 @@ import PostsPage from "./PostsPage";
 import MailSignaturePage from "./MailSignaturePage";
 import BrandPage from "./BrandPage";
 import RouteCurtain from "./RouteCurtain";
+import { sacuvajStranicu } from "./lib/pageSnapshot";
 import { initAnalytics, trackEvent, trackPageView } from "./lib/analytics";
 import { startProjectsSync } from "./lib/projectsStore";
 import { startPricingSync } from "./lib/pricingStore";
@@ -935,6 +936,17 @@ function Header() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
+  // Meni se zatvara kad se ruta promijeni (link u meniju je navigirao).
+  // Ne smije se zatvarati u onClick-u linka — vidi closeMenu ispod.
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [route]);
+
+  // VAZNO: linkovi u mobilnom meniju NE SMIJU imati onClick={closeMenu}.
+  // React 17+ kaci listener na root kontejner (prije <document> u bubble fazi),
+  // pa bi setMenuOpen(false) odmontirao <a> PRIJE nego globalni SPA interceptor
+  // na <document> vidi klik -> browser izvrsi PUNI reload (vidi se preloader).
+  // Zato: href nosi navigaciju, a meni se zatvara tek kad se ruta promijeni.
   const closeMenu = () => setMenuOpen(false);
   const openContact = useOpenContact();
 
@@ -1076,7 +1088,6 @@ function Header() {
                 className="inline-flex h-10 w-10 items-center justify-center rounded-none border border-white/10 bg-white/[0.03] text-2xl text-white/80 transition hover:border-teal-300/50 hover:bg-white hover:text-black"
                 type="button"
                 aria-label="Zatvori navigaciju"
-                onClick={closeMenu}
               >
                 <HiOutlineXMark aria-hidden="true" />
               </button>
@@ -1108,7 +1119,6 @@ function Header() {
                                 key={link.label}
                                 className="group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-white/65 transition hover:bg-white/[0.05] hover:text-white"
                                 href={link.href}
-                                onClick={closeMenu}
                               >
                                 <link.icon className="text-base text-teal-300/80" aria-hidden="true" />
                                 {link.label}
@@ -1117,7 +1127,6 @@ function Header() {
                             <a
                               className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-bold text-teal-200 transition hover:bg-white/[0.05] hover:text-white"
                               href="/usluge"
-                              onClick={closeMenu}
                             >
                               Sve usluge
                               <HiOutlineChevronRight className="text-xs" aria-hidden="true" />
@@ -1132,7 +1141,6 @@ function Header() {
                       className="menu-item group flex items-center gap-3 rounded-xl border border-transparent px-3 py-3.5 text-base font-semibold text-white/85 transition hover:border-white/10 hover:bg-white/[0.05] hover:text-white"
                       style={{ animationDelay: `${0.05 + itemIndex * 0.05}s` }}
                       href={item.href}
-                      onClick={closeMenu}
                     >
                       <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-teal-500/25 to-cyan-500/20 text-lg text-teal-200 ring-1 ring-white/10 transition group-hover:from-teal-500 group-hover:to-[#0E7490] group-hover:text-white">
                         <item.icon aria-hidden="true" />
@@ -1165,7 +1173,6 @@ function Header() {
                           key={link.label}
                           className="group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-white/65 transition hover:bg-white/[0.05] hover:text-white"
                           href={link.href}
-                          onClick={closeMenu}
                         >
                           <link.icon className="text-base text-teal-300/80" aria-hidden="true" />
                           {link.label}
@@ -5389,6 +5396,10 @@ export default function App() {
   // Globalni interceptor klikova na interne linkove → history navigacija (bez reloada).
   // Interni "/..." linkovi idu kroz navigate(); "#..." anchori skrolaju (s home-a) ili vode home + skrol.
   useEffect(() => {
+    // CAPTURE faza (true): mora se izvrsiti PRIJE React-ovih onClick handlera.
+    // Mobilni meni ima onClick={stopPropagation} na .menu-panel — u bubble fazi
+    // bi to UBILO ovaj interceptor, pa bi <a> izvrsio PUNI reload (vidi se
+    // preloader umjesto animacije prelaza).
     const onClick = (e: MouseEvent) => {
       if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
       const anchor = (e.target as HTMLElement | null)?.closest?.("a");
@@ -5399,6 +5410,7 @@ export default function App() {
       if (href.startsWith("mailto:") || href.startsWith("tel:") || href.startsWith("//") || /^https?:\/\//.test(href)) return;
       if (href.startsWith("#")) {
         e.preventDefault();
+        sacuvajStranicu();
         const id = href.slice(1);
         if (!id) {
           navigate("/");
@@ -5411,11 +5423,13 @@ export default function App() {
       }
       if (href.startsWith("/")) {
         e.preventDefault();
+        // Snimi STARU stranicu prije nego navigate() pokrene React render.
+        sacuvajStranicu();
         navigate(href);
       }
     };
-    document.addEventListener("click", onClick);
-    return () => document.removeEventListener("click", onClick);
+    document.addEventListener("click", onClick, true);
+    return () => document.removeEventListener("click", onClick, true);
   }, []);
 
   // SEO: dinamički <title> po stranici (kad JS radi) — svaka ruta dobije svoj naslov.
