@@ -31,23 +31,33 @@ Korisnik: "napravi mi na stranici logo da mogu skinuti logo u PNG formatu full H
 - Pregled svijetlih varijanti ide na bijeloj podlozi (inače se crni "Dev" ne vidi).
 - Stranica je `noindex` automatski (soft-404 guard: nije u `known` listi).
 
-### 2. Prelaz stranice — dvoslojni, stara se skuplja u centar (1,6 s)
+### 2. Prelaz stranice — dvoslojni (stara tone u centar, nova klizi zdesna)
 
-`src/RouteCurtain.tsx` (**novi fajl**) + CSS u `src/index.css`.
-
-Na navigaciju se **klonira stara stranica** u `.page-overlay` (HTML clone, bez biblioteka) i pokrenu se **obje animacije u istom frame-u**:
+`src/RouteCurtain.tsx` + `src/lib/pageSnapshot.ts` + CSS u `src/index.css`.
 
 | sloj | z-index | animacija |
 |---|---|---|
 | crna podloga `html::before` | 2 | jama u koju stranica tone |
 | `.page-overlay` (stara) | 3 | `scale 1→0.4`, `rotateX 0→9°`, `brightness 1→0.25`, `blur 0→9px` |
-| `.page-slide` (nova) | 4 | klizi: `translateX 100%→0` |
+| `.page-slide` (nova) | 4 | `translateX 100%→0` |
 
-- `transform-origin: 50% 50%` → sve 4 ivice idu ravnomjerno ka centru
-- Nova je **iznad** stare → vidi se kako klizi preko nje dok stara tone
-- `--slide-offset` čuva scroll poziciju klona
-- Izmjereno (margine simetrične → skuplja se u centar): t=200 `L12 R13 T8 B9 w975`, t=800 `L125 R125 T86 B85 w750`, t=1400 `L276 R276 T189 B189 w448`
-- Overlay se čisti na svih 5 ruta + Back; nema grešaka u konzoli
+**Dva uzroka zasto prije nije radilo (dokazana mjerenjem):**
+
+1. `RouteCurtain` je u `useEffect` klonirao `.page-slide` — a to je **poslije** React rendera, pa je dom vec bila NOVA stranica (`overlaySadrzaj === slideSadrzaj`). Animacija tonjenja se zato nikad nije vidjela.
+   **Fix:** `src/lib/pageSnapshot.ts` — `sacuvajStranicu()` se zove u interceptoru **prije** `navigate()`.
+2. Mobilni meni je radio **puni reload** (zato preloader): `.menu-panel` ima `onClick={stopPropagation}`, a interceptor je bio u **bubble** fazi na `<document>` — `stopPropagation` ga je ubijao.
+   **Fix:** `document.addEventListener("click", onClick, true)` — **capture** faza.
+3. Uklonjen `onClick={closeMenu}` sa 5 linkova u mobilnom meniju; meni se zatvara kroz `useEffect([route])`.
+
+**Trajanje po ekranu** (stara i nova uvijek isto): mobilno (<768) **1050 ms**, tablet (<1024) **1300 ms**, desktop **1600 ms**.
+
+**Izmjereno** (margine simetricne → skuplja se u centar, stara != nova):
+
+- mobilno: 280ms `L17 R17 T30 T30`, 620ms `L70 R70 T120 T120`, 950ms `L114 R114 T196 T196`
+- `MOB Projekti` stara `DevLab · Digitalna agencija` / nova `PortfolioNaši projekti`
+- `DESK O nama` stara `DevLab · Digitalna agencija` / nova `O namaTko smo mi`
+
+Overlay se cisti na svim rutama + Back; nema gresaka u konzoli; reduced-motion preskace.
 
 ### 3. Nova ikona svuda
 Stara 64x64 ikona (`logo-icon.png`) **obrisana**. Nova (`logo-icon-hd.png`, 512x512) zamijenjena na 8 mjesta:
