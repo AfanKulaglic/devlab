@@ -77,6 +77,12 @@ Uz to: `filter: blur/brightness` **potpuno uklonjen** sa `.page-overlay` i `page
 
 Overlay se cisti na svim rutama + Back; nema gresaka u konzoli; reduced-motion preskace.
 
+### 5. SPA — zaštita od ranog klika
+`index.html` ima inline skriptu u `<head>` (prije bundle-a): `window.__dvfSpa = false` i capture-fazni slušalac koji hvata klik na interni `/link` PRIJE nego se React montira, radi `preventDefault()` i pamti putanju u `sessionStorage` (`dvf-pending`). Aplikacija postavi `__dvfSpa = true` i odmah preuzme tu putanju.
+Bez ovoga je klik u prvim stotinama ms (spor telefon / slab net) radio puni reload sa preloaderom.
+
+**Ako korisnik vidi reload poslije deploya:** tab otvoren PRIJE deploya još vrti stari JS — jedan hard refresh (Ctrl+F5) ili samo reload rješava trajno.
+
 **Skrolovanje nema animaciju — nigdje.**
 
 - Uklonjen globalni `scroll-behavior: smooth` sa `html` (animirao je i vracanje skrola pri Back/Forward: 0 → 1500 u 37 koraka / 770 ms).
