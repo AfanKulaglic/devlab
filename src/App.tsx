@@ -5528,6 +5528,21 @@ export default function App() {
       }
     };
     document.addEventListener("click", onClick, true);
+    // Preuzmi klikove od ranog cuvara iz index.html (vidi komentar tamo) i
+    // obradi putanju ako je korisnik kliknuo prije nego se React montirao.
+    (window as unknown as { __dvfSpa?: boolean }).__dvfSpa = true;
+    try {
+      const cekajuca = sessionStorage.getItem("dvf-pending");
+      if (cekajuca) {
+        sessionStorage.removeItem("dvf-pending");
+        window.setTimeout(() => {
+          prikaziStaruStranicu();
+          navigate(cekajuca);
+        }, 0);
+      }
+    } catch {
+      /* sessionStorage nedostupan */
+    }
     return () => document.removeEventListener("click", onClick, true);
   }, []);
 

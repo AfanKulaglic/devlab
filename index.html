@@ -2,6 +2,34 @@
 <html lang="bs">
   <head>
     <meta charset="UTF-8" />
+    <!--
+      Rani SPA cuvar: hvata klik na interni link PRIJE nego se React ucita.
+      Bez ovoga klik u prvim stotinama ms (spor telefon / slab net) izazove
+      puni reload sa preloaderom — tacno ono sto se povremeno vidjelo.
+      Aplikacija postavi window.__dvfSpa = true cim montira svoj interceptor
+      i preuzme klikove; ako je klik ipak stigao ranije, putanja se zapamti
+      u sessionStorage i aplikacija je preuzme odmah po montiranju.
+    -->
+    <script>
+      window.__dvfSpa = false;
+      document.addEventListener(
+        "click",
+        function (e) {
+          if (window.__dvfSpa) return;
+          if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+          var a = e.target && e.target.closest ? e.target.closest("a") : null;
+          if (!a) return;
+          var h = a.getAttribute("href");
+          if (!h || h.charAt(0) !== "/" || h.charAt(1) === "/") return;
+          if (a.target === "_blank" || a.hasAttribute("download")) return;
+          e.preventDefault();
+          try {
+            sessionStorage.setItem("dvf-pending", h);
+          } catch (err) {}
+        },
+        true,
+      );
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#060606" />
     <meta name="color-scheme" content="dark" />
