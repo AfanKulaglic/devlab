@@ -121,8 +121,10 @@ Stara 64x64 ikona (`logo-icon.png`) **obrisana**. Nova (`logo-icon-hd.png`, 512x
 Lista ima 4 stavke (stranice, igrice, aplikacije, AI), a podnaslov je govorio "Pet". Popravljeno u `src/lib/posts1.ts`.
 
 ## Blokirano / otvoreno
-- **Vercel ne deploya** — produkcija zaostaje ~11 commitova. Provjeri `vercel.com/dashboard` → Deployments.
-  Verifikacija: `curl -s https://devlab.cc.cd/ | grep -c 'charAt(path.length'` mora dati `1`.
+- **NIJE Vercel — nego push.** 17.11. ustanovljeno: lokalni `main` je bio **29 commita ispred `origin/main`**, pa Vercel nije imao šta da deploya (zadnji push 14.11.). Zato je na domeni svaka stranica radila **puni reload sa preloaderom** — produkcija je bila stari build bez SPA interceptor-a.
+  **Popravljeno:** `git push origin main` → deploy gotov za ~75 s.
+  **Uvijek provjeri prije nego što kriviš Vercel:** `git rev-list --count origin/main..HEAD` mora biti `0`.
+  Verifikacija da je produkcija nova: `curl -s https://devlab.cc.cd/ | grep -c 'page-overlay'` → `2`, i `curl -s -o /dev/null -w "%{http_code}" https://devlab.cc.cd/images/logo-icon-hd.png` → `200`.
 - **Mail ne dolazi na Gmail** — DKIM 7/7 success, ali poruke se ne pojavljuju. Deprioritizovano.
 - **Video reklama** — prompt spreman (v3, realno, restoran, 80 € / 300 €). Korisnik još nije generisao.
 
